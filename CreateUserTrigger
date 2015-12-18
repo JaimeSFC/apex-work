@@ -1,0 +1,37 @@
+trigger CreateUser2 on Yukon__c (before insert) {
+	
+    List<user> userList = new  List<user>();
+     map<Id,String >  YukonIdtoName = new  map<Id,string>();
+    for(Yukon__c y : trigger.new)   
+    {
+        user user1 = new user();
+        //set field values 
+        user1.LastName=y.Contact_Last_Name__c;
+    	user1.FirstName=y.Contact_First_Name__c;
+        user1.Alias=y.Contact_Last_Name__c;
+		user1.TimeZoneSidKey='GMT';
+		user1.LocaleSidKey='en_US';
+		user1.EmailEncodingKey='ISO-8859-1';
+        user1.Username=y.Contact_Email__c;
+        user1.Email=y.Contact_Email__c;
+		user1.LanguageLocaleKey='en_US';
+		user1.UserPermissionsMobileUser = false; 
+        user1.CommunityNickname=y.Contact_First_Name__c;
+        user1.UserRole = [ select id from userrole where id ='00EE0000000Xro0' ];
+        SObject prof = [ select id from profile where id = '00eE0000000nvMI' ];
+        user1.ProfileId = (ID) prof.get('ID');
+        userList.add(user1);
+        YukonIdtoName.put(y.Id,y.Contact_First_Name__c+' '+y.Contact_Last_Name__c);
+     }
+    insert userList; //insert new user ;
+    List<User> usersToattach = [select Id,Name from User where Name in:YukonIdtoName.Values()];
+    map<String,Id> UserNameToId = new  map<String,Id> ();
+    for(User u: usersToattach){
+        UserNameToId.put(u.Name, u.Id);
+    }
+    for(Yukon__c y : trigger.new){
+        y.User__c = UserNameToId.get(YukonIdtoName.get(y.Id));
+    }
+
+    
+}
